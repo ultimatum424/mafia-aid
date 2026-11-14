@@ -128,6 +128,7 @@
 .club-table td small{color:#545e53}
 .club-qualified{color:#426146;margin-left:4px}
 .club-table .club-column-help{cursor:help;text-decoration:underline dotted;text-underline-offset:3px}
+.club-table .club-column-help[data-club-sort]{cursor:pointer}
 .club-tooltip{position:fixed;z-index:30;width:max-content;max-width:min(260px,calc(100vw - 16px));padding:7px 10px;border-radius:6px;background:var(--ink);color:var(--card);box-shadow:0 3px 12px #0003;font-size:12px;line-height:1.45;pointer-events:none}
 
 </style>
@@ -1351,6 +1352,7 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     personalSort:'wilson', pairSort:'wilson', liftSort:'lift', direction:'desc', personalSearch:'', pairSearch:''};
   const state = {...defaults, page:1, open:null};
   let clubSearch = '';
+  let clubSort = 'place', clubDirection = 'asc';
   const views = ['profile','fsm','wilson','comparison','pairs'];
   const sideLabels = {any:'Общий', red:'Красные', black:'Чёрные'};
   const sideSetting = () => state.view === 'pairs' ? 'pairSide' : 'wilsonSide';
@@ -1417,35 +1419,44 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     const minimumGames = [...months].reduce((sum, month) => sum + (core.clubGameThresholds[month] ?? 0), 0);
     $('club-threshold').textContent = !months.size ? 'Выберите месяцы для зачёта.' : minimumGames
       ? `${months.size > 1 ? 'Суммарный порог' : 'Порог зачёта'} — ${minimumGames} игр. Выполнившие порог идут первыми по Р., остальные — по сумме баллов.`
-      : 'Без порога игр. Все игроки отсортированы по Р.';
+      : 'Без порога игр. Порядок зачёта определяется по Р.';
     const rows = core.clubRanking(games, minimumGames).map((row,index) => ({...row,place:index+1}))
       .filter(row => matchingSearch({names:[row.name]},clubSearch));
     const format = (value, digits = 3) => value.toLocaleString('ru', {maximumFractionDigits:digits});
     const formatAverageExtra = value => value.toLocaleString('ru', {maximumFractionDigits:3, roundingMode:'halfEven'});
-    const roleHint = 'Победы / игры, винрейт, сумма допов, максимальный и средний доп.';
+    const roleHint = 'Победы / игры, винрейт, сумма допов, максимальный и средний доп. Сортировка по числу игр.';
     const columns = [
-      ['№', 'Место в зачёте. Достигшие порога идут первыми по Р., остальные — по сумме баллов.'],
-      ['Игрок', 'Ник игрока. Галочка означает, что порог игр выполнен.'],
-      ['∑', 'Сумма баллов за результат игры, допов, ЛХ и Ci за вычетом штрафов и техштрафов.'],
-      ['Р.', 'Сумма баллов ∑ × доля побед. При отображении винрейт и итоговый рейтинг округляются до двух знаков.'],
-      ['∑ +', 'Сумма судейских допов и баллов за ЛХ за вычетом обычных штрафов.'],
-      ['Первый убитый', 'Сколько раз игрок за красных отмечен в протоколе как первый убитый.'],
-      ['ЛХ', 'Баллы за лучший ход. За 1, 2 или 3 угаданных чёрных начисляется 0,1, 0,3 или 0,6 балла.'],
-      ['Допы', 'Сумма дополнительных баллов, выставленных судьёй.'],
-      ['Ci', 'Сумма компенсационных баллов из протоколов. Входит в ∑.'],
-      ['Штрафы', 'Сумма обычных штрафов. Вычитается из ∑ и ∑ +.'],
-      ['Техштрафы', 'Сумма технических штрафов. Вычитается из ∑.'],
-      ['Общая', `Все роли вместе. ${roleHint}`],
-      ['Дон', `Игры за дона. ${roleHint}`],
-      ['Мафия', `Игры за рядового чёрного. ${roleHint}`],
-      ['Шериф', `Игры за шерифа. ${roleHint}`],
-      ['Мирный', `Игры за мирного жителя. ${roleHint}`],
-      ['μ', 'Средний балл за игру. Сумма баллов ∑ делится на число игр.'],
-      ['P', 'Баллы во внешний рейтинг. В клубной таблице отображается прочерк.']
+      ['№', 'place', 'Место в зачёте. Достигшие порога идут первыми по Р., остальные — по сумме баллов.'],
+      ['Игрок', 'name', 'Ник игрока. Галочка означает, что порог игр выполнен.'],
+      ['∑', 'total', 'Сумма баллов за результат игры, допов, ЛХ и Ci за вычетом штрафов и техштрафов.'],
+      ['Р.', 'rating', 'Сумма баллов ∑ × доля побед. При отображении винрейт и итоговый рейтинг округляются до двух знаков.'],
+      ['∑ +', 'extras', 'Сумма судейских допов и баллов за ЛХ за вычетом обычных штрафов.'],
+      ['Первый убитый', 'firstKilled', 'Сколько раз игрок за красных отмечен в протоколе как первый убитый.'],
+      ['ЛХ', 'bestMove', 'Баллы за лучший ход. За 1, 2 или 3 угаданных чёрных начисляется 0,1, 0,3 или 0,6 балла.'],
+      ['Допы', 'bonus', 'Сумма дополнительных баллов, выставленных судьёй.'],
+      ['Ci', 'ci', 'Сумма компенсационных баллов из протоколов. Входит в ∑.'],
+      ['Штрафы', 'penalty', 'Сумма обычных штрафов. Вычитается из ∑ и ∑ +.'],
+      ['Техштрафы', 'technical', 'Сумма технических штрафов. Вычитается из ∑.'],
+      ['Общая', 'games', `Все роли вместе. ${roleHint}`],
+      ['Дон', 'don', `Игры за дона. ${roleHint}`],
+      ['Мафия', 'mafia', `Игры за рядового чёрного. ${roleHint}`],
+      ['Шериф', 'sheriff', `Игры за шерифа. ${roleHint}`],
+      ['Мирный', 'citizen', `Игры за мирного жителя. ${roleHint}`],
+      ['μ', 'mean', 'Средний балл за игру. Сумма баллов ∑ делится на число игр.'],
+      ['P', null, 'Баллы во внешний рейтинг. В клубной таблице отображается прочерк.']
     ];
-    const headings = columns.map(([label, hint], index) => `<th scope="col">
-      <button type="button" class="club-column-help" aria-describedby="club-hint-${index}">${esc(label)}</button>
-      <span id="club-hint-${index}" class="sr-only">${esc(hint)}</span></th>`).join('');
+    const sortSign = clubDirection === 'asc' ? 1 : -1;
+    rows.sort((a,b) => {
+      const difference = clubSort === 'name' ? a.name.localeCompare(b.name, 'ru') :
+        (a.roles[clubSort]?.games ?? a[clubSort]) - (b.roles[clubSort]?.games ?? b[clubSort]);
+      return sortSign * difference || a.place - b.place;
+    });
+    const headings = columns.map(([label, field, hint], index) => {
+      const active = field === clubSort;
+      return `<th scope="col"${active ? ` aria-sort="${clubDirection === 'asc' ? 'ascending' : 'descending'}"` : ''}>
+        <button type="button" class="club-column-help"${field ? ` data-club-sort="${field}"` : ''} aria-describedby="club-hint-${index}">${esc(label)}${field ? `<span aria-hidden="true"> ${active ? (clubDirection === 'asc' ? '↑' : '↓') : '↕'}</span>` : ''}</button>
+        <span id="club-hint-${index}" class="sr-only">${esc(hint)}</span></th>`;
+    }).join('');
     const roleCell = ({wins,games,extras,maxExtra,scored}) => `<td>${wins} / ${games} (${format(games ? wins / games * 100 : 0,2)}%)<br>
       <small>Доп: ${format(extras)} · макс.: ${format(maxExtra)} · ср.: ${formatAverageExtra(scored ? extras / scored : 0)}</small>
       ${scored < games ? `<br><small>Баллы: ${scored} из ${games} игр</small>` : ''}</td>`;
@@ -1594,6 +1605,20 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
   document.addEventListener('keydown', event => {if (event.key === 'Escape') hideClubHint();});
   $('ranking-panel').addEventListener('click', event => {
     const button=event.target.closest('button');if(!button)return;
+    const clubField = button.dataset.clubSort;
+    if (clubField) {
+      clubDirection = clubSort === clubField
+        ? (clubDirection === 'asc' ? 'desc' : 'asc')
+        : (['place','name'].includes(clubField) ? 'asc' : 'desc');
+      clubSort = clubField;
+      const wrapper = button.closest('.rank-table-wrap');
+      const scrollLeft = wrapper.scrollLeft;
+      renderClubTable();
+      const result = $('club-results');
+      result.querySelector('.rank-table-wrap').scrollLeft = scrollLeft;
+      result.querySelector(`[data-club-sort="${clubField}"]`).focus({preventScroll:true});
+      return;
+    }
     if (button.classList.contains('club-column-help')) {showClubHint(button);return;}
     if (button.dataset.rankSide) {
       state[sideSetting()] = button.dataset.rankSide;
