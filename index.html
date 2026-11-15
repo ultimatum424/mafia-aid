@@ -170,6 +170,42 @@
 .club-table .club-column-help[data-club-sort]{cursor:pointer}
 .club-tooltip{position:fixed;z-index:30;width:max-content;max-width:min(260px,calc(100vw - 16px));padding:7px 10px;border-radius:6px;background:var(--ink);color:var(--card);box-shadow:0 3px 12px #0003;font-size:12px;line-height:1.45;pointer-events:none}
 
+.view-tabs{width:100%;flex-wrap:wrap}
+.view-tabs button{flex:1 0 auto}
+.section-heading-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 16px;min-width:0}
+.section-heading-actions .global-period{width:auto;flex-direction:column;align-items:flex-end;gap:4px}
+.section-heading-actions .period-picker{max-width:100%}
+.section-heading-actions .month-popup{left:auto;right:0;width:min(278px,calc(100vw - 32px))}
+.section-heading-actions .period-picker{z-index:4}
+.rank-intro .help-button{margin-top:4px;max-width:none;text-align:left}
+.player-profile .rank-intro{align-items:flex-start}
+.player-profile .rank-intro .profile-player-search{margin-top:10px}
+@media(max-width:560px){
+  .rank-intro,.workspace-top{flex-wrap:wrap}
+  .section-heading-actions{width:100%}
+}
+.home-overview{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:24px;align-items:start}
+.home-section{min-width:0}
+.home-section-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;margin-bottom:12px}
+.home-section-heading h2{margin:0;font:600 clamp(21px,2.5vw,29px)/1.15 var(--serif)}
+.home-section-heading .profile-caption{margin:5px 0 0;text-transform:capitalize}
+.home-section-heading .text-button{white-space:nowrap}
+.home-ranking{min-width:0}
+.home-ranking th,.home-ranking td{padding:9px 10px;border-bottom:1px solid var(--line)}
+.home-ranking :is(th,td):nth-child(n+3){text-align:right;white-space:nowrap}
+.home-ranking .rank-name{min-width:0;max-width:none;overflow-wrap:anywhere}
+.home-ranking .rank-name>button{display:inline}
+.home-ranking .rank-name>button span{margin-left:.35em}
+.home-ranking tbody tr:last-child>*{border-bottom:0}
+.home-ranking-link{margin-top:10px}
+.home-overview .profile-game-list{margin-top:0}
+@media(max-width:780px){
+  .home-overview{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:420px){
+  .home-ranking th,.home-ranking td{padding:8px 6px}
+}
+
 </style>
   
   
@@ -211,14 +247,17 @@
 
       <div class="analysis-toolbar">
         <nav id="view-tabs" class="view-tabs" role="tablist" aria-label="Режим статистики">
+          <button id="tab-home" type="button" role="tab" aria-selected="true" aria-controls="home-panel" data-view="home">Главная</button>
           <button id="tab-profile" type="button" role="tab" aria-selected="false" aria-controls="profile-panel" tabindex="-1" data-view="profile">Карточка игрока</button>
-          <button id="tab-fsm" type="button" role="tab" aria-selected="true" aria-controls="ranking-panel" data-view="fsm">Рейтинг по ФСМ</button>
+          <button id="tab-fsm" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-view="fsm">Рейтинг по ФСМ</button>
           <button id="tab-wilson" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-view="wilson">Рейтинг по Вилсону</button>
           <button id="tab-comparison" type="button" role="tab" aria-selected="false" aria-controls="comparison-panel" tabindex="-1" data-view="comparison">Противостояния</button>
           <button id="tab-pairs" type="button" role="tab" aria-selected="false" aria-controls="ranking-panel" tabindex="-1" data-view="pairs">Пары</button>
           <button id="tab-games" type="button" role="tab" aria-selected="false" aria-controls="game-archive-panel" tabindex="-1" data-view="games">Список игр</button>
         </nav>
-        <div class="global-period">
+      </div>
+      <div id="period-parking" hidden>
+        <div id="global-period" class="global-period">
           <details id="period-picker" class="period-picker">
             <summary aria-label="Выбрать месяцы"><span class="period-icon" aria-hidden="true">▦</span><span id="period-summary">Последний месяц</span><span aria-hidden="true">⌄</span></summary>
             <div class="month-popup"><div class="month-popup-title">МЕСЯЦЫ ИГР</div><div id="months" role="group" aria-label="Выбранные месяцы"></div><div class="month-actions"><button type="button" id="months-all">Выбрать все</button><button type="button" id="months-none">Снять выбор</button></div><p>Можно выбрать несколько месяцев. Рейтинг по ФСМ использует месяцы зачётов, остальные вкладки — даты игр.</p></div>
@@ -227,11 +266,30 @@
         </div>
       </div>
 
+      <section id="home-panel" class="home-overview" role="tabpanel" aria-labelledby="tab-home">
+        <section class="home-section" aria-labelledby="home-ranking-title">
+          <div class="home-section-heading">
+            <div><h2 id="home-ranking-title">Рейтинг по ФСМ</h2><p id="home-ranking-month" class="profile-caption"></p></div>
+          </div>
+          <div id="home-ranking-results"></div>
+          <button type="button" class="text-button home-ranking-link" data-home-view="fsm">Смотреть весь рейтинг <span aria-hidden="true">↗</span></button>
+        </section>
+        <section class="home-section" aria-labelledby="home-games-title">
+          <div class="home-section-heading">
+            <h2 id="home-games-title">Последние игры</h2>
+            <button type="button" class="text-button" data-home-view="games">Список игр <span aria-hidden="true">↗</span></button>
+          </div>
+          <div id="home-games" class="profile-game-list"></div>
+        </section>
+      </section>
+
       <div id="comparison-panel" role="tabpanel" aria-labelledby="tab-comparison" hidden>
       <section class="workspace" aria-labelledby="query-title">
         <div class="workspace-top">
           <h2 id="query-title"><span class="section-number">01</span> Выберите составы</h2>
-          <p class="workspace-hint">Одна группа — союзники. Две группы — соперники.</p>
+          <div class="section-heading-actions" data-period-slot>
+            <p class="workspace-hint">Одна группа — союзники. Две группы — соперники.</p>
+          </div>
         </div>
 
         <div class="teams-grid">
@@ -279,10 +337,12 @@
       </section>
       </div>
 
-      <section id="ranking-panel" class="ranking-panel" role="tabpanel" aria-labelledby="tab-fsm"></section>
+      <section id="ranking-panel" class="ranking-panel" role="tabpanel" aria-labelledby="tab-fsm" hidden></section>
       <section id="game-archive-panel" role="tabpanel" aria-labelledby="tab-games" hidden>
         <div class="rank-intro"><div><h2 id="game-archive-title" tabindex="-1">Список игр</h2>
-          <p>Выберите игроков, чтобы найти игры, в которых участвовали все выбранные.</p></div></div>
+          <p>Выберите игроков, чтобы найти игры, в которых участвовали все выбранные.</p></div>
+          <div class="section-heading-actions" data-period-slot></div>
+        </div>
         <div class="rank-filters archive-filters">
           <div id="archive-picker" class="profile-player-search archive-picker">
             <label class="profile-select" for="archive-search">Игроки
@@ -300,13 +360,17 @@
       </section>
       <section id="profile-panel" class="ranking-panel player-profile" role="tabpanel" aria-labelledby="tab-profile" hidden>
         <div class="rank-intro">
-          <div><h2>Карточка игрока</h2><p>Результаты и награды за выбранные месяцы.</p></div>
-          <div class="profile-player-search">
-            <label class="profile-select" for="profile-player">Игрок
-              <input id="profile-player" type="search" autocomplete="off" placeholder="Найти по нику" aria-controls="profile-matches">
-            </label>
-            <div id="profile-matches" class="profile-matches" aria-label="Результаты поиска" hidden></div>
+          <div>
+            <h2>Карточка игрока</h2>
+            <div class="profile-player-search">
+              <label class="profile-select" for="profile-player">Игрок
+                <input id="profile-player" type="search" autocomplete="off" placeholder="Найти по нику" aria-controls="profile-matches">
+              </label>
+              <div id="profile-matches" class="profile-matches" aria-label="Результаты поиска" hidden></div>
+            </div>
+            <p>Результаты и награды за выбранные месяцы.</p>
           </div>
+          <div class="section-heading-actions" data-period-slot></div>
         </div>
         <div id="profile-results" aria-live="polite"></div>
       </section>
@@ -503,6 +567,19 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       lift:smoothedTogether - (smoothedA + smoothedB) / 2, smoothedTogether, smoothedA, smoothedB};
   }
 
+  function bestPairRows(pairs, metric) {
+    const minimumGames = pairs.some(pair => pair.total >= 3) ? 3 : 2;
+    const eligible = pairs.filter(pair => pair.total >= minimumGames);
+    const best = Math.max(...eligible.map(pair => pair[metric]));
+    return eligible.filter(pair => Math.abs(pair[metric] - best) < 1e-10);
+  }
+
+  function pairNominationLeaders({pairs, baseline}) {
+    const withLift = pairs.filter(pair => pair.apartA.total >= 3 && pair.apartB.total >= 3)
+      .map(pair => ({...pair, ...pairLift(pair, baseline)}));
+    return {wilson:bestPairRows(pairs, 'wilson'), lift:bestPairRows(withLift, 'lift')};
+  }
+
   const clubGameThresholds = Object.freeze({'2026-06':10, '2026-09':4, '2026-10':4, '2026-11':5});
 
   function clubRanking(games, minimumGames = 0) {
@@ -573,7 +650,7 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       b.total-a.total || b.extras-a.extras || b.wins-a.wins || a.name.localeCompare(b.name,'ru'));
   }
 
-  const api = {opposite, normalize, playerIndex, groupSide, inPeriod, query, stats, wilson, analyze, pairLift, clubRanking, clubGameThresholds};
+  const api = {opposite, normalize, playerIndex, groupSide, inPeriod, query, stats, wilson, analyze, pairLift, pairNominationLeaders, clubRanking, clubGameThresholds};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MafiaCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -1012,6 +1089,7 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
   window.MafiaUI = {
     renderGameCard,
     renderArchive,
+    selectMonths,
     getPeriodGames: () => core.inPeriod(data.games, state),
     getPeriodKey: () => state.months.join(','),
     openComparison: (names, side) => {
@@ -1284,6 +1362,44 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     return {value, detail:seats.join(', ')};
   }
 
+  function winStreaks(appearances) {
+    const current = {red:0, black:0};
+    const longest = {red:0, black:0};
+    for (const {side, won} of appearances) {
+      current[side] = won ? current[side] + 1 : 0;
+      longest[side] = Math.max(longest[side], current[side]);
+    }
+    return longest;
+  }
+
+  function pairNominations(periodGames) {
+    const analysis = core.analyze(periodGames);
+    return [
+      ['red', 'Красные', 'Красный союз'],
+      ['black', 'Чёрные', 'Соучастники']
+    ].flatMap(([side, sideLabel, wilsonTitle]) => {
+      const leaders = core.pairNominationLeaders(analysis[side]);
+      const categories = [
+        ['wilson', wilsonTitle, 'Лучший результат пары по Вилсону'],
+        ['lift', `Вместе сильнее · ${sideLabel}`, 'Наибольшая прибавка к винрейту вместе']
+      ];
+      return categories.flatMap(([metric, title, unit]) => {
+        const pairs = leaders[metric];
+        if (!pairs.length) return [];
+        const players = new Map();
+        for (const {names, wins, total} of pairs) {
+          for (const [index, name] of names.entries()) {
+            const detail = `Пара с ${names[1 - index]} (${wins} / ${total})`;
+            players.set(name, [players.get(name), detail].filter(Boolean).join(' · '));
+          }
+        }
+        const best = pairs[0][metric];
+        const value = metric === 'lift' ? `${best > 0 ? '+' : ''}${score(best)} п.п.` : score(best);
+        return [{title, value, players, unit, pairs:pairs.map(({names}) => names.join(' + '))}];
+      });
+    });
+  }
+
   function getNominationLeaders(periodGames) {
     const categories = [
       ['Сыщик с того света', 'Наибольшее количество найденных чёрных в ЛХ'],
@@ -1293,12 +1409,17 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       ['Счастливое место', 'Наибольшее количество побед на одном месте'],
       ['One man army', 'Наибольшее количество баллов в проигранной игре'],
       ['Короля не убить', 'Наибольший средний доп без ЛХ при поражениях'],
-      ['Враг в отражении', 'Самый большой штраф за игру']
+      ['Враг в отражении', 'Самый большой штраф за игру'],
+      ['На красной полосе', 'Больше всего побед подряд за красных'],
+      ['На чёрной полосе', 'Больше всего побед подряд за чёрных']
     ];
     const leaders = categories.map(() => ({value:-Infinity, players:new Map()}));
+    const chronological = [...periodGames].sort((a,b) => a.date.localeCompare(b.date) ||
+      a.label.localeCompare(b.label, 'ru', {numeric:true}));
     for (const player of core.playerIndex(periodGames)) {
-      const games = getAppearances(periodGames, player.name);
+      const games = getAppearances(chronological, player.name);
       const bestMoves = bestMoveGroups(games);
+      const streaks = winStreaks(games);
       const scoredLosses = games.filter(game => !game.won && game.points);
       const lossExtraUnits = scoredLosses.reduce((sum, game) => sum + Math.round(game.points.extra * 1e6), 0);
       const bestLossExtra = games.reduce((best, game) => game.won || !game.points ? best :
@@ -1313,7 +1434,9 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
         {value:scoredLosses.length ? lossExtraUnits / scoredLosses.length / 1e6 : 0,
           eligible:scoredLosses.length > 0,
           detail:`Поражений: ${scoredLosses.length}`},
-        {value:Math.max(0, ...games.map(game => -(game.points?.penalty ?? 0)))}
+        {value:Math.max(0, ...games.map(game => -(game.points?.penalty ?? 0)))},
+        {value:streaks.red},
+        {value:streaks.black}
       ];
       for (const [index, metric] of metrics.entries()) {
         const leader = leaders[index];
@@ -1325,12 +1448,13 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
         leader.players.set(player.name, metric.detail);
       }
     }
-    return categories.flatMap(([title, unit], index) => {
+    const individual = categories.flatMap(([title, unit], index) => {
       const {value, players} = leaders[index];
       if (!players.size) return [];
       const displayedValue = title === 'Враг в отражении' ? -value : value;
       return [{title, value:score(displayedValue), players, unit}];
     });
+    return [...individual, ...pairNominations(periodGames)];
   }
 
   const gamesByMonth = new Map();
@@ -1365,8 +1489,8 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       const awardRows = (data.awards || []).filter(award => award.month === key)
         .sort((a,b) => (a.place ?? 4) - (b.place ?? 4))
         .map(({title,name,place}) => renderSlideAward(title.replace('черный','чёрный'), name, place));
-      const nominationRows = monthlyNominations(key).map(({title,players,value,unit}) => {
-        const winners = [...players.keys()].join(', ');
+      const nominationRows = monthlyNominations(key).map(({title,players,value,unit,pairs}) => {
+        const winners = (pairs ?? [...players.keys()]).join(', ');
         return `<li class="carousel-nomination"><div>
           <span class="nomination-title">${escape(title)}</span>
           <strong class="nomination-winner">${escape(winners)}</strong>
@@ -1383,7 +1507,6 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       renderSlide();
     });
     renderSlide();
-    carousel.hidden = false;
   }
 
   function renderSlideAward(title, winner, place) {
@@ -1597,20 +1720,23 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
   const delta = value => value === null || value === undefined ? '—' : `${value > 0 ? '+' : ''}${num(value)} п.п.`;
   const ratio = row => `${row.wins}/${row.total}`;
   const namesHTML = row => row.names.map(esc).join('<span class="pair-plus"> + </span>');
-  const helpButton = '<button type="button" class="help-button" data-open-help aria-haspopup="dialog"><span aria-hidden="true">ⓘ</span> Как считаются рейтинги?</button>';
+  const helpButton = (label = 'Как считаются рейтинги?') => `<button type="button" class="help-button" data-open-help aria-haspopup="dialog"><span aria-hidden="true">ⓘ</span> ${label}</button>`;
   const helpTitles = {fsm:'Рейтинг по ФСМ', wilson:'Рейтинг по Вилсону', pairs:'Расчёты для пар'};
-  const defaults = {view:'fsm', wilsonSide:'any', pairSide:'red', personalMin:3, pairMin:2, apartMin:3, k:5, mode:'performance',
+  const defaults = {view:'home', wilsonSide:'any', pairSide:'red', personalMin:3, pairMin:2, apartMin:3, k:5, mode:'performance',
     personalSort:'wilson', pairSort:'wilson', liftSort:'lift', direction:'desc', personalSearch:'', pairSearch:''};
   const state = {...defaults, page:1, open:null};
   let clubSearch = '';
   let clubSort = 'place', clubDirection = 'asc';
-  const views = ['profile','fsm','wilson','comparison','pairs','games'];
+  const views = ['home','profile','fsm','wilson','comparison','pairs','games'];
+  const clubFormat = (value, digits = 3) => value.toLocaleString('ru', {maximumFractionDigits:digits});
+  const clubMonth = game => game.ratingMonth || game.date.slice(0,7);
+  const latestClubMonth = data.games.map(clubMonth).sort().at(-1);
+  const period = $('global-period');
+  const periodSlot = '<div class="section-heading-actions" data-period-slot></div>';
   const sideLabels = {any:'Общий', red:'Красные', black:'Чёрные'};
   const sideSetting = () => state.view === 'pairs' ? 'pairSide' : 'wilsonSide';
   try {
     const saved = JSON.parse(localStorage.getItem('mafia-rankings-v1') || '{}');
-    if (views.includes(saved.view)) state.view = saved.view;
-    if (saved.view === 'personal') state.view = saved.personalMode === 'wilson' ? 'wilson' : 'fsm';
     const pairSide = saved.pairSide ?? saved.side;
     if (['red','black'].includes(pairSide)) state.pairSide = pairSide;
     const wilsonSide = saved.wilsonSide ?? (saved.view === 'personal' && saved.personalMode === 'wilson' ? saved.side : null);
@@ -1644,11 +1770,16 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       button.setAttribute('aria-selected', String(selected)); button.tabIndex = selected ? 0 : -1;
     }
     $('comparison-panel').hidden = view !== 'comparison';
+    $('home-panel').hidden = view !== 'home';
+    $('honors-carousel').hidden = view !== 'home' || !$('honors-carousel-months').childElementCount;
+    $('period-picker').open = false;
     const isRanking = ['fsm','wilson','pairs'].includes(view);
     $('ranking-panel').hidden = !isRanking;
     $('profile-panel').hidden = view !== 'profile';
     $('game-archive-panel').hidden = view !== 'games';
     if (isRanking) { $('ranking-panel').setAttribute('aria-labelledby', 'tab-' + view); renderPanel(); }
+    else if (view === 'home') $('period-parking').append(period);
+    else $(view === 'games' ? 'game-archive-panel' : view + '-panel').querySelector('[data-period-slot]').append(period);
     if (view === 'profile') ui.renderProfile();
     if (view === 'games') ui.renderArchive();
     if (focus) $('tab-' + view).focus({preventScroll:true});
@@ -1663,27 +1794,55 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     heading.scrollIntoView({block:'start', behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
   }
 
+  function clubSummaryCells(row, minimumGames) {
+    return `<td>${row.place}</td><th scope="row" class="rank-name"><button type="button" data-profile-games="${esc(row.name)}">${esc(row.name)}<span aria-hidden="true">↗</span></button>${minimumGames && row.qualified ? ' <span class="club-qualified" role="img" title="Порог зачёта выполнен" aria-label="Порог зачёта выполнен">✓</span>' : ''}</th>
+      <td>${clubFormat(row.total)}</td><td><strong>${clubFormat(row.displayRating,2)}</strong></td><td>${clubFormat(row.extras)}</td>`;
+  }
+
+  function renderHome() {
+    const latestMonth = latestClubMonth;
+    if (!latestMonth) {
+      $('home-ranking-results').textContent = 'В архиве пока нет игр.';
+      $('home-games').textContent = 'В архиве пока нет игр.';
+      $('home-panel').querySelector('[data-home-view="fsm"]').disabled = true;
+      return;
+    }
+    const monthLabel = new Date(latestMonth + '-01T00:00:00Z').toLocaleDateString('ru', {
+      month:'long', year:'numeric', timeZone:'UTC'
+    }).replace(/ г\.$/, '');
+    $('home-ranking-month').textContent = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+    const minimumGames = core.clubGameThresholds[latestMonth] ?? 0;
+    const rows = core.clubRanking(data.games.filter(game => clubMonth(game) === latestMonth), minimumGames);
+    const body = rows.slice(0,7).map((row,index) => `<tr>${clubSummaryCells({...row,place:index+1}, minimumGames)}</tr>`).join('');
+    $('home-ranking-results').innerHTML = `<div class="rank-table-wrap"><table class="rank-table home-ranking" aria-labelledby="home-ranking-title home-ranking-month">
+      <thead><tr><th scope="col">№</th><th scope="col">Игрок</th><th scope="col" title="Сумма баллов">∑</th><th scope="col" title="Рейтинг по ФСМ">Р.</th><th scope="col" title="Допы и ЛХ за вычетом штрафов">∑ +</th></tr></thead>
+      <tbody>${body}</tbody></table></div>`;
+    $('home-games').innerHTML = [...data.games].sort((a,b) => b.date.localeCompare(a.date)).slice(0,10).map(game =>
+      ui.renderGameCard(game, {idPrefix:'home-game',lineupGroup:'home-games',
+        note:game.winner === 'red' ? 'Победили мирные' : 'Победила мафия'})).join('');
+  }
+
   function renderClubPanel() {
     $('ranking-panel').innerHTML = `<div class="rank-intro"><div><h2>Рейтинг по ФСМ</h2>
-      <p>Рейтинг = сумма баллов × доля побед. Игры учитываются по месяцу клубного зачёта.</p></div>${helpButton}</div>
+      ${helpButton()}</div>${periodSlot}</div>
       <div class="rank-filters"><label class="rank-search">Игрок
         <input id="club-search" type="search" placeholder="Найти по нику" value="${esc(clubSearch)}">
       </label></div>
       <p id="club-threshold" class="rank-status"></p>
       <div id="club-results"></div>`;
+    $('ranking-panel').querySelector('[data-period-slot]').append(period);
     renderClubTable();
   }
 
   function renderClubTable() {
     const months = new Set(ui.getPeriodKey().split(',').filter(Boolean));
-    const games = data.games.filter(game => months.has(game.ratingMonth || game.date.slice(0,7)));
+    const games = data.games.filter(game => months.has(clubMonth(game)));
     const minimumGames = [...months].reduce((sum, month) => sum + (core.clubGameThresholds[month] ?? 0), 0);
     $('club-threshold').textContent = !months.size ? 'Выберите месяцы для зачёта.' : minimumGames
       ? `${months.size > 1 ? 'Суммарный порог' : 'Порог зачёта'} — ${minimumGames} игр. Выполнившие порог идут первыми по Р., остальные — по сумме баллов.`
       : 'Без порога игр. Порядок зачёта определяется по Р.';
     const rows = core.clubRanking(games, minimumGames).map((row,index) => ({...row,place:index+1}))
       .filter(row => matchingSearch({names:[row.name]},clubSearch));
-    const format = (value, digits = 3) => value.toLocaleString('ru', {maximumFractionDigits:digits});
     const formatAverageExtra = value => value.toLocaleString('ru', {maximumFractionDigits:3, roundingMode:'halfEven'});
     const roleHint = 'Победы / игры, винрейт, сумма допов, максимальный и средний доп. Сортировка по числу игр.';
     const columns = [
@@ -1718,15 +1877,14 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
         <button type="button" class="club-column-help"${field ? ` data-club-sort="${field}"` : ''} aria-describedby="club-hint-${index}">${esc(label)}${field ? `<span aria-hidden="true"> ${active ? (clubDirection === 'asc' ? '↑' : '↓') : '↕'}</span>` : ''}</button>
         <span id="club-hint-${index}" class="sr-only">${esc(hint)}</span></th>`;
     }).join('');
-    const roleCell = ({wins,games,extras,maxExtra,scored}) => `<td>${wins} / ${games} (${format(games ? wins / games * 100 : 0,2)}%)<br>
-      <small>Доп: ${format(extras)} · макс.: ${format(maxExtra)} · ср.: ${formatAverageExtra(scored ? extras / scored : 0)}</small>
+    const roleCell = ({wins,games,extras,maxExtra,scored}) => `<td>${wins} / ${games} (${clubFormat(games ? wins / games * 100 : 0,2)}%)<br>
+      <small>Доп: ${clubFormat(extras)} · макс.: ${clubFormat(maxExtra)} · ср.: ${formatAverageExtra(scored ? extras / scored : 0)}</small>
       ${scored < games ? `<br><small>Баллы: ${scored} из ${games} игр</small>` : ''}</td>`;
-    const body = rows.map(row => `<tr><td>${row.place}</td><th scope="row" class="rank-name"><button type="button" data-profile-games="${esc(row.name)}">${esc(row.name)}<span aria-hidden="true">↗</span></button>${minimumGames && row.qualified ? ' <span class="club-qualified" role="img" title="Порог зачёта выполнен" aria-label="Порог зачёта выполнен">✓</span>' : ''}</th>
-      <td>${format(row.total)}</td><td><strong>${format(row.displayRating,2)}</strong></td>
-      <td>${format(row.extras)}</td><td>${row.firstKilled}</td><td>${format(row.bestMove)}</td>
-      <td>${format(row.bonus)}</td><td>${format(row.ci)}</td><td>${format(row.penalty)}</td><td>${format(row.technical)}</td>
+    const body = rows.map(row => `<tr>${clubSummaryCells(row, minimumGames)}
+      <td>${row.firstKilled}</td><td>${clubFormat(row.bestMove)}</td>
+      <td>${clubFormat(row.bonus)}</td><td>${clubFormat(row.ci)}</td><td>${clubFormat(row.penalty)}</td><td>${clubFormat(row.technical)}</td>
       ${roleCell(row)}${Object.values(row.roles).map(roleCell).join('')}
-      <td>${format(row.mean,4)}</td><td title="Вклад во внешний рейтинг не вычисляется из протоколов">—</td></tr>`).join('');
+      <td>${clubFormat(row.mean,4)}</td><td title="Вклад во внешний рейтинг не вычисляется из протоколов">—</td></tr>`).join('');
     $('club-results').innerHTML = rows.length ? `<div class="rank-table-wrap"><table class="rank-table club-table">
       <thead><tr>${headings}</tr></thead><tbody>${body}</tbody></table></div>
       <div id="club-tooltip" class="club-tooltip" aria-hidden="true" hidden></div>` :
@@ -1759,7 +1917,8 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     const side = state[sideSetting()];
     const sideOptions = pair ? ['red','black'] : ['any','red','black'];
     $('ranking-panel').innerHTML = `
-      <div class="rank-intro"><div><h2>${pair ? 'Сильнее вместе' : 'Рейтинг по Вилсону'}</h2>${pair ? '<p>Сравните результаты пар и то, как они выступают без друг друга в команде.</p>' : ''}</div>${helpButton}</div>
+      <div class="rank-intro"><div><h2>${pair ? 'Сильнее вместе' : 'Рейтинг по Вилсону'}</h2>
+        ${helpButton(pair ? 'Как считаются результаты пар?' : undefined)}${pair ? '<p>Сравните результаты пар и то, как они выступают без друг друга в команде.</p>' : ''}</div>${periodSlot}</div>
       ${pair ? `<div class="pair-modes" role="group" aria-label="Режим анализа пар"><button type="button" data-mode="performance" aria-pressed="${state.mode === 'performance'}">Совместные результаты</button><button type="button" data-mode="lift" aria-pressed="${state.mode === 'lift'}">Прибавка вместе</button></div>` : ''}
       <div class="rank-filters"><div class="rank-side" role="group" aria-label="Результаты по сторонам">${sideOptions.map(option => `<button type="button" data-rank-side="${option}" aria-pressed="${side === option}">${option === 'any' ? '' : `<i class="${option}-dot" aria-hidden="true"></i>`}${pair ? (option === 'red' ? 'Мирные' : 'Мафия') : sideLabels[option]}</button>`).join('')}</div>
         <label class="number-setting">${pair ? 'Минимум совместных игр' : 'Минимум игр'}<input id="ranking-min" type="number" min="1" max="100000" step="1" inputmode="numeric" data-setting="${pair ? 'pairMin' : 'personalMin'}" value="${pair ? state.pairMin : state.personalMin}"></label>
@@ -1769,6 +1928,7 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
       ${pair ? `<details class="smoothing-controls" ${state.mode !== 'lift' ? 'hidden' : ''}><summary>Настройки сглаживания <span id="k-caption">k = ${state.k}</span></summary><div><label class="number-setting">Вес среднего результата стороны<input type="number" min="0" max="100000" step="1" inputmode="numeric" data-setting="k" value="${state.k}"></label><p>Число условных игр со средним результатом стороны. При k = 0 сглаживания нет. Среднее рассчитывается по выбранным месяцам.</p></div></details>` : ''}
       <div id="rank-status" class="rank-status" role="status" aria-live="polite"></div>
       <div id="ranking-results"></div><div id="rank-pagination" class="pagination"></div>`;
+    $('ranking-panel').querySelector('[data-period-slot]').append(period);
     renderTable();
   }
 
@@ -1913,6 +2073,24 @@ window.MAFIA_DATA = {"version":1,"sources":[{"id":"source-1","title":"Резул
     if (state.view === 'fsm') renderClubTable();
     else if (state.view === 'wilson' || state.view === 'pairs') {state.page=1;state.open=null;renderTable();}
   });
+  $('home-panel').addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (button?.dataset.homeView === 'fsm') {
+      clubSearch = '';
+      clubSort = 'place';
+      clubDirection = 'asc';
+      ui.selectMonths([latestClubMonth]);
+    }
+    if (button?.dataset.homeView) selectView(button.dataset.homeView, true);
+    if (button?.dataset.profileGames) openProfileGames(button.dataset.profileGames);
+  });
+  document.querySelector('.brand').addEventListener('click', event => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    selectView('home');
+    window.scrollTo({top:0});
+  });
+  renderHome();
   selectView(state.view);
 })();
 
